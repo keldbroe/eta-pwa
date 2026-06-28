@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#0a1628" media="(prefers-color-scheme: dark)" />
-  <meta name="theme-color" content="#f0f4f8" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#f5a800" media="(prefers-color-scheme: light)" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="ETA" />
@@ -15,39 +15,39 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── Mørkt tema (nat / standard) ── */
+    /* ── Mørkt tema (nat) ── */
     :root {
-      --bg:        #0a1628;
-      --surface:   #111f38;
-      --card:      #162745;
-      --border:    rgba(255,255,255,0.08);
-      --accent:    #4a9eff;
-      --accent2:   #1a6fcc;
-      --text:      #e8f0fb;
-      --muted:     #7a95bc;
-      --dim:       #3d5a80;
-      --green:     #22c97a;
-      --amber:     #f5a623;
-      --red:       #e84040;
-      --radius:    14px;
-      --mono:      'SF Mono', 'Fira Mono', 'Consolas', monospace;
+      --bg:      #0a1628;
+      --surface: #111f38;
+      --card:    #162745;
+      --border:  rgba(255,255,255,0.08);
+      --accent:  #4a9eff;
+      --accent2: #1a6fcc;
+      --text:    #e8f0fb;
+      --muted:   #7a95bc;
+      --dim:     #3d5a80;
+      --eta-col: #e8f0fb;
+      --amber:   #f5a623;
+      --red:     #e84040;
+      --radius:  14px;
+      --mono:    'SF Mono', 'Fira Mono', 'Consolas', monospace;
     }
 
-    /* ── Lyst tema (dag / skarpt lys) ── */
+    /* ── Lyst tema (dag, cockpit-amber) ── */
     @media (prefers-color-scheme: light) {
       :root {
-        --bg:      #dce8f5;
-        --surface: #c8daea;
-        --card:    #ffffff;
-        --border:  rgba(0,0,0,0.12);
-        --accent:  #0055aa;
-        --accent2: #0044cc;
-        --text:    #0a1628;
-        --muted:   #2a4a70;
-        --dim:     #6a8aaa;
-        --green:   #006e3a;
-        --amber:   #7a4d00;
-        --red:     #b00000;
+        --bg:      #f5a800;
+        --surface: #e09600;
+        --card:    #ffc740;
+        --border:  rgba(0,0,0,0.18);
+        --accent:  #1a1a00;
+        --accent2: #000000;
+        --text:    #0d0d00;
+        --muted:   #3a2e00;
+        --dim:     #7a6200;
+        --eta-col: #000000;
+        --amber:   #5a3d00;
+        --red:     #8b0000;
       }
     }
 
@@ -89,6 +89,7 @@
       font-size: 13px;
       color: var(--accent);
       letter-spacing: 0.05em;
+      font-weight: 600;
     }
 
     main {
@@ -107,15 +108,11 @@
       gap: 12px;
     }
 
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .field { display: flex; flex-direction: column; gap: 8px; }
 
     .field-label {
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 600;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--muted);
@@ -125,12 +122,12 @@
     .time-input {
       width: 100%;
       background: var(--card);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius);
       color: var(--text);
       font-family: var(--mono);
       font-size: 32px;
-      font-weight: 400;
+      font-weight: 600;
       text-align: center;
       letter-spacing: 4px;
       padding: 18px 12px;
@@ -145,16 +142,16 @@
     .time-input:focus {
       outline: none;
       border-color: var(--accent2);
-      box-shadow: 0 0 0 3px rgba(74,158,255,0.15);
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.12);
     }
 
     .time-input.error {
       border-color: var(--red);
-      box-shadow: 0 0 0 3px rgba(232,64,64,0.12);
+      box-shadow: 0 0 0 3px rgba(139,0,0,0.15);
     }
 
     .field-hint  { font-size: 11px; color: var(--dim); text-align: center; }
-    .field-error { font-size: 11px; color: var(--red); text-align: center; min-height: 15px; }
+    .field-error { font-size: 11px; color: var(--red); text-align: center; min-height: 15px; font-weight: 600; }
 
     /* Numpad */
     .numpad-section { display: flex; flex-direction: column; gap: 10px; }
@@ -166,11 +163,11 @@
       max-width: 140px;
       padding: 7px 12px;
       border-radius: 8px;
-      border: 0.5px solid var(--border);
+      border: 1.5px solid var(--border);
       background: transparent;
       color: var(--muted);
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       cursor: pointer;
@@ -184,6 +181,10 @@
       color: #fff;
     }
 
+    @media (prefers-color-scheme: light) {
+      .field-tab.active { color: #fff; background: #1a1a00; border-color: #1a1a00; }
+    }
+
     .numpad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -192,11 +193,11 @@
 
     .num-btn {
       background: var(--card);
-      border: 0.5px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius);
       color: var(--text);
-      font-size: 24px;
-      font-weight: 400;
+      font-size: 26px;
+      font-weight: 500;
       padding: 18px 10px;
       cursor: pointer;
       transition: background 0.1s, transform 0.08s;
@@ -211,7 +212,7 @@
     /* ETA result */
     .result-card {
       background: var(--card);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius);
       padding: 20px;
       display: flex;
@@ -227,32 +228,36 @@
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 3px;
-      background: var(--green);
+      background: var(--eta-col);
       opacity: 0;
       transition: opacity 0.3s;
     }
 
-    .result-card.has-result::before { opacity: 1; }
+    .result-card.has-result::before { opacity: 0.4; }
 
     .result-label {
       font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.12em;
+      font-weight: 600;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--muted);
     }
 
     .result-time {
       font-family: var(--mono);
-      font-size: 56px;
-      font-weight: 400;
-      color: var(--green);
+      font-size: 64px;
+      font-weight: 700;
+      color: var(--eta-col);
       letter-spacing: 6px;
       line-height: 1;
-      transition: color 0.2s;
     }
 
-    .result-time.empty { color: var(--dim); letter-spacing: 4px; }
+    .result-time.empty {
+      color: var(--dim);
+      font-weight: 400;
+      font-size: 56px;
+      letter-spacing: 4px;
+    }
 
     .result-meta {
       font-size: 12px;
@@ -262,27 +267,36 @@
       align-items: center;
       flex-wrap: wrap;
       justify-content: center;
+      font-weight: 500;
     }
 
     .midnight-badge {
-      background: rgba(245,166,35,0.15);
+      background: rgba(0,0,0,0.12);
       color: var(--amber);
-      border: 0.5px solid rgba(245,166,35,0.3);
+      border: 1px solid rgba(0,0,0,0.2);
       border-radius: 6px;
       padding: 2px 8px;
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 700;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .midnight-badge {
+        background: rgba(245,166,35,0.15);
+        color: #f5a623;
+        border-color: rgba(245,166,35,0.3);
+      }
     }
 
     .reset-btn {
       margin-top: 6px;
       background: var(--surface);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: 10px;
       color: var(--muted);
-      font-size: 13px;
-      font-weight: 500;
-      padding: 10px 32px;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 36px;
       cursor: pointer;
       letter-spacing: 0.05em;
       transition: all 0.15s;
@@ -292,9 +306,9 @@
     .reset-btn:active { background: var(--card); color: var(--text); transform: scale(0.97); }
 
     @media (max-height: 700px) {
-      .num-btn { padding: 14px 10px; font-size: 20px; }
+      .num-btn { padding: 14px 10px; font-size: 22px; }
       main { gap: 14px; }
-      .result-time { font-size: 44px; }
+      .result-time { font-size: 48px; }
     }
   </style>
 </head>

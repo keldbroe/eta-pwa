@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a1628" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ETA" />
+  <meta name="description" content="VFR ETA-beregner til flyveledelse" />
+  <title>ETA · VFR</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a1628;
+      --surface:  #111f38;
+      --card:     #162745;
+      --border:   rgba(255,255,255,0.08);
+      --accent:   #4a9eff;
+      --accent2:  #1a6fcc;
+      --text:     #e8f0fb;
+      --muted:    #7a95bc;
+      --dim:      #3d5a80;
+      --green:    #22c97a;
+      --amber:    #f5a623;
+      --red:      #e84040;
+      --radius:   14px;
+      --mono:     'SF Mono', 'Fira Mono', 'Consolas', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+      border-bottom: 0.5px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .utc-clock {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 24px 20px;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    .field-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-left: 2px;
+    }
+
+    .time-input-wrap {
+      position: relative;
+    }
+
+    .time-input {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 32px;
+      font-weight: 400;
+      text-align: center;
+      letter-spacing: 4px;
+      padding: 18px 12px;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      caret-color: var(--accent);
+    }
+
+    .time-input::placeholder {
+      color: var(--dim);
+      letter-spacing: 3px;
+    }
+
+    .time-input:focus {
+      outline: none;
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(74,158,255,0.15);
+    }
+
+    .time-input.error {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(232,64,64,0.12);
+    }
+
+    .field-hint {
+      font-size: 11px;
+      color: var(--dim);
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+
+    .field-error {
+      font-size: 11px;
+      color: var(--red);
+      text-align: center;
+      min-height: 15px;
+    }
+
+    /* Numpad */
+    .numpad-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .active-field-indicator {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .field-tab {
+      flex: 1;
+      max-width: 140px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: 0.5px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .field-tab.active {
+      background: var(--accent2);
+      border-color: var(--accent2);
+      color: #fff;
+    }
+
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .num-btn {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 24px;
+      font-weight: 400;
+      padding: 18px 10px;
+      cursor: pointer;
+      transition: background 0.1s, transform 0.08s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .num-btn:active {
+      background: var(--surface);
+      transform: scale(0.96);
+    }
+
+    .num-btn.del-btn {
+      font-size: 20px;
+      color: var(--muted);
+    }
+
+    .num-btn.zero-btn {
+      grid-column: 2;
+    }
+
+    /* ETA result */
+    .result-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--green);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .result-card.has-result::before {
+      opacity: 1;
+    }
+
+    .result-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .result-time {
+      font-family: var(--mono);
+      font-size: 56px;
+      font-weight: 400;
+      color: var(--green);
+      letter-spacing: 6px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .result-time.empty {
+      color: var(--dim);
+      letter-spacing: 4px;
+    }
+
+    .result-meta {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .midnight-badge {
+      background: rgba(245,166,35,0.15);
+      color: var(--amber);
+      border: 0.5px solid rgba(245,166,35,0.3);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .clear-btn {
+      margin-top: 4px;
+      background: transparent;
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      color: var(--dim);
+      font-size: 12px;
+      padding: 6px 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .clear-btn:active { color: var(--muted); background: var(--surface); }
+
+    @media (max-height: 700px) {
+      .num-btn { padding: 14px 10px; font-size: 20px; }
+      main { gap: 14px; }
+      .result-time { font-size: 44px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="header-title">VFR · ETA</span>
+  <span class="utc-clock" id="utc-clock">––:––Z</span>
+</header>
+
+<main>
+  <!-- Input fields -->
+  <div class="field-group">
+    <div class="field">
+      <span class="field-label">Starttid (ATD)</span>
+      <div class="time-input-wrap">
+        <input class="time-input" id="dep" type="text" inputmode="none"
+               placeholder="––––" maxlength="4" autocomplete="off" readonly />
+      </div>
+      <span class="field-hint">HHMM · UTC</span>
+      <span class="field-error" id="dep-err"></span>
+    </div>
+    <div class="field">
+      <span class="field-label">Flyvetid (EET)</span>
+      <div class="time-input-wrap">
+        <input class="time-input" id="dur" type="text" inputmode="none"
+               placeholder="––––" maxlength="4" autocomplete="off" readonly />
+      </div>
+      <span class="field-hint">HHMM</span>
+      <span class="field-error" id="dur-err"></span>
+    </div>
+  </div>
+
+  <!-- ETA result -->
+  <div class="result-card" id="result-card">
+    <span class="result-label">ETA</span>
+    <span class="result-time empty" id="result-time">––––</span>
+    <div class="result-meta" id="result-meta"></div>
+    <button class="clear-btn" id="clear-btn">Ryd</button>
+  </div>
+
+  <!-- Numpad -->
+  <div class="numpad-section">
+    <div class="active-field-indicator">
+      <button class="field-tab active" id="tab-dep" onclick="switchField('dep')">Starttid</button>
+      <button class="field-tab" id="tab-dur" onclick="switchField('dur')">Flyvetid</button>
+    </div>
+    <div class="numpad" id="numpad">
+      <button class="num-btn" onclick="numPress('1')">1</button>
+      <button class="num-btn" onclick="numPress('2')">2</button>
+      <button class="num-btn" onclick="numPress('3')">3</button>
+      <button class="num-btn" onclick="numPress('4')">4</button>
+      <button class="num-btn" onclick="numPress('5')">5</button>
+      <button class="num-btn" onclick="numPress('6')">6</button>
+      <button class="num-btn" onclick="numPress('7')">7</button>
+      <button class="num-btn" onclick="numPress('8')">8</button>
+      <button class="num-btn" onclick="numPress('9')">9</button>
+      <button class="num-btn zero-btn" onclick="numPress('0')">0</button>
+      <button class="num-btn del-btn" onclick="numDel()">⌫</button>
+    </div>
+  </div>
+</main>
+
+<script>
+  let activeField = 'dep';
+  const state = { dep: '', dur: '' };
+
+  const depEl  = document.getElementById('dep');
+  const durEl  = document.getElementById('dur');
+  const depErr = document.getElementById('dep-err');
+  const durErr = document.getElementById('dur-err');
+  const resultTime = document.getElementById('result-time');
+  const resultMeta = document.getElementById('result-meta');
+  const resultCard = document.getElementById('result-card');
+
+  function switchField(f) {
+    activeField = f;
+    document.getElementById('tab-dep').classList.toggle('active', f === 'dep');
+    document.getElementById('tab-dur').classList.toggle('active', f === 'dur');
+    depEl.classList.toggle('focus-ring', f === 'dep');
+    durEl.classList.toggle('focus-ring', f === 'dur');
+  }
+
+  depEl.addEventListener('focus', () => switchField('dep'));
+  durEl.addEventListener('focus', () => switchField('dur'));
+
+  function numPress(d) {
+    const s = state[activeField];
+    if (s.length >= 4) return;
+    state[activeField] = s + d;
+    render();
+    if (state[activeField].length === 4 && activeField === 'dep') {
+      setTimeout(() => switchField('dur'), 120);
+    }
+  }
+
+  function numDel() {
+    state[activeField] = state[activeField].slice(0, -1);
+    render();
+  }
+
+  document.getElementById('clear-btn').addEventListener('click', () => {
+    state.dep = ''; state.dur = '';
+    render();
+    switchField('dep');
+  });
+
+  function formatDisplay(raw) {
+    if (!raw) return '';
+    const p = raw.padStart(4, '0');
+    return p.slice(0, 2) + ':' + p.slice(2, 4);
+  }
+
+  function parseMinutes(raw) {
+    if (raw.length < 1) return null;
+    const p = raw.padStart(4, '0');
+    const hh = parseInt(p.slice(0, 2), 10);
+    const mm = parseInt(p.slice(2, 4), 10);
+    if (hh > 23 || mm > 59) return null;
+    return hh * 60 + mm;
+  }
+
+  function toHHMM(mins) {
+    const mod = ((mins % 1440) + 1440) % 1440;
+    return String(Math.floor(mod / 60)).padStart(2, '0') +
+           String(mod % 60).padStart(2, '0');
+  }
+
+  function durLabel(mins) {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h === 0) return m + ' min';
+    if (m === 0) return h + 't';
+    return h + 't ' + m + 'min';
+  }
+
+  function render() {
+    const d = state.dep;
+    const u = state.dur;
+
+    depEl.value = d.length ? formatDisplay(d) : '';
+    durEl.value = u.length ? formatDisplay(u) : '';
+
+    depErr.textContent = '';
+    durErr.textContent = '';
+    depEl.classList.remove('error');
+    durEl.classList.remove('error');
+
+    const depMins = d.length === 4 ? parseMinutes(d) : null;
+    const durMins = u.length === 4 ? parseMinutes(u) : null;
+
+    if (d.length === 4 && depMins === null) {
+      depErr.textContent = 'Ugyldig tid';
+      depEl.classList.add('error');
+    }
+    if (u.length === 4 && durMins === null) {
+      durErr.textContent = 'Ugyldig tid';
+      durEl.classList.add('error');
+    }
+
+    if (depMins !== null && durMins !== null) {
+      const etaMins = depMins + durMins;
+      const etaStr  = toHHMM(etaMins);
+      resultTime.textContent = etaStr.slice(0,2) + ':' + etaStr.slice(2,4);
+      resultTime.classList.remove('empty');
+      resultCard.classList.add('has-result');
+
+      let meta = durLabel(durMins) + ' flyvetid';
+      resultMeta.innerHTML = meta;
+      if (etaMins >= 1440) {
+        resultMeta.innerHTML += ' <span class="midnight-badge">+1 dag</span>';
+      }
+    } else {
+      resultTime.textContent = '––––';
+      resultTime.classList.add('empty');
+      resultCard.classList.remove('has-result');
+      resultMeta.innerHTML = '';
+    }
+  }
+
+  // Live UTC clock
+  function updateClock() {
+    const now = new Date();
+    const hh = String(now.getUTCHours()).padStart(2, '0');
+    const mm = String(now.getUTCMinutes()).padStart(2, '0');
+    const ss = String(now.getUTCSeconds()).padStart(2, '0');
+    document.getElementById('utc-clock').textContent = hh + ':' + mm + ':' + ss + 'Z';
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Keyboard support (f.eks. Bluetooth numpad)
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') numPress(e.key);
+    else if (e.key === 'Backspace') numDel();
+    else if (e.key === 'Tab') {
+      e.preventDefault();
+      switchField(activeField === 'dep' ? 'dur' : 'dep');
+    }
+  });
+
+  // Service Worker registrering
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(console.error);
+  }
+</script>
+</body>
+</html>

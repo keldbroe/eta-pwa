@@ -15,7 +15,6 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── Mørkt tema (nat) ── */
     :root {
       --bg:      #0a1628;
       --surface: #111f38;
@@ -29,11 +28,11 @@
       --eta-col: #e8f0fb;
       --amber:   #f5a623;
       --red:     #e84040;
+      --green:   #22c97a;
       --radius:  14px;
       --mono:    'SF Mono', 'Fira Mono', 'Consolas', monospace;
     }
 
-    /* ── Lyst tema (dag, cockpit-amber) ── */
     @media (prefers-color-scheme: light) {
       :root {
         --bg:      #f5a800;
@@ -48,6 +47,7 @@
         --eta-col: #000000;
         --amber:   #5a3d00;
         --red:     #8b0000;
+        --green:   #004d20;
       }
     }
 
@@ -67,259 +67,239 @@
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
 
-    header {
+    /* ── Nav tabs ── */
+    nav {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 20px 12px;
       border-bottom: 0.5px solid var(--border);
       flex-shrink: 0;
     }
 
-    .header-title {
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .utc-clock {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--accent);
-      letter-spacing: 0.05em;
-      font-weight: 600;
-    }
-
-    main {
+    .nav-tab {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 24px 20px;
-      gap: 20px;
-      overflow-y: auto;
-    }
-
-    .field-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .field { display: flex; flex-direction: column; gap: 8px; }
-
-    .field-label {
-      font-size: 11px;
+      padding: 14px 8px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--muted);
-      padding-left: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+
+    @media (prefers-color-scheme: light) {
+      .nav-tab.active { border-bottom-color: #1a1a00; }
+    }
+
+    /* ── Pages ── */
+    .page { display: none; flex: 1; flex-direction: column; justify-content: center; padding: 20px; gap: 16px; overflow-y: auto; }
+    .page.active { display: flex; }
+
+    /* ── ETA page ── */
+    .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+
+    .field-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted); padding-left: 2px;
     }
 
     .time-input {
-      width: 100%;
-      background: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-      font-family: var(--mono);
-      font-size: 32px;
-      font-weight: 600;
-      text-align: center;
-      letter-spacing: 4px;
-      padding: 18px 12px;
-      appearance: none;
-      -webkit-appearance: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      caret-color: var(--accent);
+      width: 100%; background: var(--card); border: 1.5px solid var(--border);
+      border-radius: var(--radius); color: var(--text); font-family: var(--mono);
+      font-size: 32px; font-weight: 600; text-align: center; letter-spacing: 4px;
+      padding: 18px 12px; appearance: none; -webkit-appearance: none;
+      transition: border-color 0.15s, box-shadow 0.15s; caret-color: var(--accent);
     }
 
     .time-input::placeholder { color: var(--dim); letter-spacing: 3px; }
-
-    .time-input:focus {
-      outline: none;
-      border-color: var(--accent2);
-      box-shadow: 0 0 0 3px rgba(0,0,0,0.12);
-    }
-
-    .time-input.error {
-      border-color: var(--red);
-      box-shadow: 0 0 0 3px rgba(139,0,0,0.15);
-    }
+    .time-input:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(0,0,0,0.12); }
+    .time-input.error { border-color: var(--red); }
 
     .field-hint  { font-size: 11px; color: var(--dim); text-align: center; }
     .field-error { font-size: 11px; color: var(--red); text-align: center; min-height: 15px; font-weight: 600; }
 
-    /* Numpad */
+    .result-card {
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      position: relative; overflow: hidden;
+    }
+
+    .result-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--eta-col); opacity: 0; transition: opacity 0.3s;
+    }
+    .result-card.has-result::before { opacity: 0.4; }
+
+    .result-label { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+    .result-time {
+      font-family: var(--mono); font-size: 64px; font-weight: 700;
+      color: var(--eta-col); letter-spacing: 6px; line-height: 1;
+    }
+    .result-time.empty { color: var(--dim); font-weight: 400; font-size: 56px; letter-spacing: 4px; }
+
+    .result-meta { font-size: 12px; color: var(--muted); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; font-weight: 500; }
+
+    .midnight-badge {
+      background: rgba(0,0,0,0.12); color: var(--amber);
+      border: 1px solid rgba(0,0,0,0.2); border-radius: 6px;
+      padding: 2px 8px; font-size: 11px; font-weight: 700;
+    }
+    @media (prefers-color-scheme: dark) {
+      .midnight-badge { background: rgba(245,166,35,0.15); color: #f5a623; border-color: rgba(245,166,35,0.3); }
+    }
+
+    .reset-btn {
+      margin-top: 4px; background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 10px; color: var(--muted); font-size: 14px; font-weight: 600;
+      padding: 10px 36px; cursor: pointer; letter-spacing: 0.05em; transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .reset-btn:active { background: var(--card); color: var(--text); transform: scale(0.97); }
+
     .numpad-section { display: flex; flex-direction: column; gap: 10px; }
 
     .active-field-indicator { display: flex; gap: 8px; justify-content: center; }
 
     .field-tab {
-      flex: 1;
-      max-width: 140px;
-      padding: 7px 12px;
-      border-radius: 8px;
-      border: 1.5px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.15s;
-      text-align: center;
+      flex: 1; max-width: 140px; padding: 7px 12px; border-radius: 8px;
+      border: 1.5px solid var(--border); background: transparent; color: var(--muted);
+      font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: pointer; transition: all 0.15s; text-align: center;
     }
-
-    .field-tab.active {
-      background: var(--accent2);
-      border-color: var(--accent2);
-      color: #fff;
-    }
-
+    .field-tab.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
     @media (prefers-color-scheme: light) {
-      .field-tab.active { color: #fff; background: #1a1a00; border-color: #1a1a00; }
+      .field-tab.active { background: #1a1a00; border-color: #1a1a00; color: #fff; }
     }
 
-    .numpad {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
+    .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 
     .num-btn {
-      background: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-      font-size: 26px;
-      font-weight: 500;
-      padding: 18px 10px;
-      cursor: pointer;
-      transition: background 0.1s, transform 0.08s;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
+      background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius);
+      color: var(--text); font-size: 26px; font-weight: 500; padding: 16px 10px;
+      cursor: pointer; transition: background 0.1s, transform 0.08s;
+      -webkit-tap-highlight-color: transparent; user-select: none;
     }
-
     .num-btn:active { background: var(--surface); transform: scale(0.96); }
     .num-btn.del-btn { font-size: 20px; color: var(--muted); }
     .num-btn.zero-btn { grid-column: 2; }
 
-    /* ETA result */
-    .result-card {
-      background: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      position: relative;
-      overflow: hidden;
+    /* ── Wake turbulence page ── */
+    .wt-title {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted); text-align: center;
     }
 
-    .result-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: var(--eta-col);
-      opacity: 0;
-      transition: opacity 0.3s;
+    .wt-timers { display: flex; flex-direction: column; gap: 12px; }
+
+    .wt-card {
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; position: relative; overflow: hidden;
+      transition: border-color 0.3s;
     }
 
-    .result-card.has-result::before { opacity: 0.4; }
-
-    .result-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--muted);
+    .wt-card::before {
+      content: ''; position: absolute; top: 0; left: 0; bottom: 0;
+      width: 4px; background: var(--muted); transition: background 0.3s;
     }
 
-    .result-time {
-      font-family: var(--mono);
-      font-size: 64px;
-      font-weight: 700;
-      color: var(--eta-col);
-      letter-spacing: 6px;
-      line-height: 1;
+    .wt-card.running::before { background: var(--amber); }
+    .wt-card.done::before    { background: var(--green); }
+    .wt-card.running { border-color: rgba(245,166,35,0.3); }
+    .wt-card.done    { border-color: rgba(34,201,122,0.3); }
+
+    @media (prefers-color-scheme: light) {
+      .wt-card.running { border-color: rgba(90,61,0,0.3); }
+      .wt-card.done    { border-color: rgba(0,77,32,0.3); }
     }
 
-    .result-time.empty {
-      color: var(--dim);
-      font-weight: 400;
-      font-size: 56px;
-      letter-spacing: 4px;
+    .wt-left { display: flex; flex-direction: column; gap: 4px; }
+
+    .wt-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted);
     }
 
-    .result-meta {
-      font-size: 12px;
-      color: var(--muted);
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: center;
-      font-weight: 500;
+    .wt-countdown {
+      font-family: var(--mono); font-size: 52px; font-weight: 700;
+      color: var(--text); letter-spacing: 3px; line-height: 1;
+      transition: color 0.3s;
     }
 
-    .midnight-badge {
-      background: rgba(0,0,0,0.12);
-      color: var(--amber);
-      border: 1px solid rgba(0,0,0,0.2);
-      border-radius: 6px;
-      padding: 2px 8px;
-      font-size: 11px;
-      font-weight: 700;
+    .wt-card.running .wt-countdown { color: var(--amber); }
+    .wt-card.done    .wt-countdown { color: var(--green); }
+
+    .wt-status {
+      font-size: 12px; font-weight: 600; color: var(--dim);
+      letter-spacing: 0.05em; min-height: 16px;
+    }
+    .wt-card.running .wt-status { color: var(--amber); }
+    .wt-card.done    .wt-status { color: var(--green); }
+
+    .wt-btn {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 12px; color: var(--text); font-size: 13px; font-weight: 700;
+      padding: 14px 20px; cursor: pointer; white-space: nowrap;
+      transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+      letter-spacing: 0.04em; flex-shrink: 0;
+    }
+    .wt-btn:active { transform: scale(0.96); }
+    .wt-btn.start  { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+    .wt-btn.stop   { background: var(--surface); color: var(--muted); }
+
+    @media (prefers-color-scheme: light) {
+      .wt-btn.start { background: #1a1a00; border-color: #1a1a00; color: #fff; }
     }
 
-    @media (prefers-color-scheme: dark) {
-      .midnight-badge {
-        background: rgba(245,166,35,0.15);
-        color: #f5a623;
-        border-color: rgba(245,166,35,0.3);
-      }
-    }
-
-    .reset-btn {
-      margin-top: 6px;
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 600;
-      padding: 10px 36px;
-      cursor: pointer;
-      letter-spacing: 0.05em;
-      transition: all 0.15s;
+    .wt-reset-all {
+      background: transparent; border: 1.5px solid var(--border);
+      border-radius: 10px; color: var(--dim); font-size: 13px; font-weight: 600;
+      padding: 10px; cursor: pointer; transition: all 0.15s; width: 100%;
       -webkit-tap-highlight-color: transparent;
     }
+    .wt-reset-all:active { color: var(--muted); background: var(--card); }
 
-    .reset-btn:active { background: var(--card); color: var(--text); transform: scale(0.97); }
+    /* progress bar */
+    .wt-progress-wrap {
+      width: 100%; height: 4px; background: var(--border);
+      border-radius: 2px; margin-top: 6px; overflow: hidden;
+    }
+    .wt-progress-bar {
+      height: 100%; background: var(--amber); border-radius: 2px;
+      transition: width 0.9s linear;
+      width: 100%;
+    }
+    .wt-card.done .wt-progress-bar { background: var(--green); width: 0%; transition: none; }
 
     @media (max-height: 700px) {
-      .num-btn { padding: 14px 10px; font-size: 22px; }
-      main { gap: 14px; }
+      .num-btn { padding: 12px 10px; font-size: 22px; }
+      .page { gap: 12px; }
       .result-time { font-size: 48px; }
+      .wt-countdown { font-size: 40px; }
     }
   </style>
 </head>
 <body>
 
-<header>
-  <span class="header-title">VFR - ETA</span>
-  <span class="utc-clock" id="utc-clock">––:––Z</span>
-</header>
+<nav>
+  <button class="nav-tab active" onclick="showPage('eta')">ETA</button>
+  <button class="nav-tab" onclick="showPage('wt')">Wake turbulence</button>
+</nav>
 
-<main>
+<!-- ── ETA PAGE ── -->
+<div class="page active" id="page-eta">
   <div class="field-group">
     <div class="field">
       <span class="field-label">Starttid (ATD)</span>
@@ -363,12 +343,55 @@
       <button class="num-btn del-btn" onclick="numDel()">⌫</button>
     </div>
   </div>
-</main>
+</div>
+
+<!-- ── WAKE TURBULENCE PAGE ── -->
+<div class="page" id="page-wt">
+  <span class="wt-title">Wake turbulence adskillelse</span>
+
+  <div class="wt-timers">
+
+    <div class="wt-card" id="wt-card-2">
+      <div class="wt-left">
+        <span class="wt-label">2 minutter</span>
+        <span class="wt-countdown" id="wt-display-2">2:00</span>
+        <span class="wt-status" id="wt-status-2">Klar</span>
+        <div class="wt-progress-wrap">
+          <div class="wt-progress-bar" id="wt-bar-2" style="width:0%"></div>
+        </div>
+      </div>
+      <button class="wt-btn start" id="wt-btn-2" onclick="wtStart(2)">Start</button>
+    </div>
+
+    <div class="wt-card" id="wt-card-3">
+      <div class="wt-left">
+        <span class="wt-label">3 minutter</span>
+        <span class="wt-countdown" id="wt-display-3">3:00</span>
+        <span class="wt-status" id="wt-status-3">Klar</span>
+        <div class="wt-progress-wrap">
+          <div class="wt-progress-bar" id="wt-bar-3" style="width:0%"></div>
+        </div>
+      </div>
+      <button class="wt-btn start" id="wt-btn-3" onclick="wtStart(3)">Start</button>
+    </div>
+
+  </div>
+
+  <button class="wt-reset-all" onclick="wtResetAll()">↺ Nulstil begge</button>
+</div>
 
 <script>
+  /* ── Navigation ── */
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  /* ── ETA logic ── */
   let activeField = 'dep';
   const state = { dep: '', dur: '' };
-
   const depEl      = document.getElementById('dep');
   const durEl      = document.getElementById('dur');
   const depErr     = document.getElementById('dep-err');
@@ -424,53 +447,34 @@
 
   function toHHMM(mins) {
     const mod = ((mins % 1440) + 1440) % 1440;
-    return String(Math.floor(mod / 60)).padStart(2, '0') +
-           String(mod % 60).padStart(2, '0');
+    return String(Math.floor(mod / 60)).padStart(2, '0') + String(mod % 60).padStart(2, '0');
   }
 
   function durLabel(mins) {
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
+    const h = Math.floor(mins / 60), m = mins % 60;
     if (h === 0) return m + ' min';
     if (m === 0) return h + 't';
     return h + 't ' + m + 'min';
   }
 
   function render() {
-    const d = state.dep;
-    const u = state.dur;
-
+    const d = state.dep, u = state.dur;
     depEl.value = d.length ? formatDisplay(d) : '';
     durEl.value = u.length ? formatDisplay(u) : '';
-
-    depErr.textContent = '';
-    durErr.textContent = '';
-    depEl.classList.remove('error');
-    durEl.classList.remove('error');
-
+    depErr.textContent = ''; durErr.textContent = '';
+    depEl.classList.remove('error'); durEl.classList.remove('error');
     const depMins = d.length === 4 ? parseMinutes(d) : null;
     const durMins = u.length === 4 ? parseMinutes(u) : null;
-
-    if (d.length === 4 && depMins === null) {
-      depErr.textContent = 'Ugyldig tid';
-      depEl.classList.add('error');
-    }
-    if (u.length === 4 && durMins === null) {
-      durErr.textContent = 'Ugyldig tid';
-      durEl.classList.add('error');
-    }
-
+    if (d.length === 4 && depMins === null) { depErr.textContent = 'Ugyldig tid'; depEl.classList.add('error'); }
+    if (u.length === 4 && durMins === null) { durErr.textContent = 'Ugyldig tid'; durEl.classList.add('error'); }
     if (depMins !== null && durMins !== null) {
       const etaMins = depMins + durMins;
       const etaStr  = toHHMM(etaMins);
       resultTime.textContent = etaStr.slice(0,2) + ':' + etaStr.slice(2,4);
       resultTime.classList.remove('empty');
       resultCard.classList.add('has-result');
-      let meta = durLabel(durMins) + ' flyvetid';
-      resultMeta.innerHTML = meta;
-      if (etaMins >= 1440) {
-        resultMeta.innerHTML += ' <span class="midnight-badge">+1 dag</span>';
-      }
+      resultMeta.innerHTML = durLabel(durMins) + ' flyvetid';
+      if (etaMins >= 1440) resultMeta.innerHTML += ' <span class="midnight-badge">+1 dag</span>';
     } else {
       resultTime.textContent = '––––';
       resultTime.classList.add('empty');
@@ -479,28 +483,107 @@
     }
   }
 
+  /* ── UTC clock ── */
   function updateClock() {
     const now = new Date();
-    const hh = String(now.getUTCHours()).padStart(2, '0');
-    const mm = String(now.getUTCMinutes()).padStart(2, '0');
-    const ss = String(now.getUTCSeconds()).padStart(2, '0');
-    document.getElementById('utc-clock').textContent = hh + ':' + mm + ':' + ss + 'Z';
+    document.getElementById('utc-clock') && (document.getElementById('utc-clock').textContent =
+      String(now.getUTCHours()).padStart(2,'0') + ':' +
+      String(now.getUTCMinutes()).padStart(2,'0') + ':' +
+      String(now.getUTCSeconds()).padStart(2,'0') + 'Z');
   }
-  updateClock();
+
+  /* ── Wake turbulence timers ── */
+  const wtState = {
+    2: { interval: null, remaining: 120, total: 120, running: false, done: false },
+    3: { interval: null, remaining: 180, total: 180, running: false, done: false }
+  };
+
+  function wtStart(mins) {
+    const s = wtState[mins];
+    const card    = document.getElementById('wt-card-' + mins);
+    const display = document.getElementById('wt-display-' + mins);
+    const status  = document.getElementById('wt-status-' + mins);
+    const btn     = document.getElementById('wt-btn-' + mins);
+    const bar     = document.getElementById('wt-bar-' + mins);
+
+    if (s.running) {
+      // Stop/reset
+      clearInterval(s.interval);
+      s.interval = null;
+      s.running = false;
+      s.done = false;
+      s.remaining = s.total;
+      card.className = 'wt-card';
+      display.textContent = mins + ':00';
+      status.textContent = 'Klar';
+      btn.textContent = 'Start';
+      btn.className = 'wt-btn start';
+      bar.style.width = '0%';
+      return;
+    }
+
+    // Start
+    s.running = true;
+    s.done = false;
+    s.remaining = s.total;
+    card.classList.add('running');
+    btn.textContent = 'Stop';
+    btn.className = 'wt-btn stop';
+    status.textContent = 'Tæller ned...';
+    bar.style.width = '100%';
+
+    // Vibrate on start if supported
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    s.interval = setInterval(() => {
+      s.remaining--;
+      const m = Math.floor(s.remaining / 60);
+      const sc = s.remaining % 60;
+      display.textContent = m + ':' + String(sc).padStart(2, '0');
+      bar.style.width = Math.round((s.remaining / s.total) * 100) + '%';
+
+      if (s.remaining <= 0) {
+        clearInterval(s.interval);
+        s.interval = null;
+        s.running = false;
+        s.done = true;
+        card.classList.remove('running');
+        card.classList.add('done');
+        display.textContent = '0:00';
+        status.textContent = 'Frigiv ✓';
+        btn.textContent = 'Nulstil';
+        btn.className = 'wt-btn start';
+        bar.style.width = '0%';
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      }
+    }, 1000);
+  }
+
+  function wtResetAll() {
+    [2, 3].forEach(mins => {
+      const s = wtState[mins];
+      if (s.interval) clearInterval(s.interval);
+      s.interval = null; s.running = false; s.done = false; s.remaining = s.total;
+      document.getElementById('wt-card-' + mins).className = 'wt-card';
+      document.getElementById('wt-display-' + mins).textContent = mins + ':00';
+      document.getElementById('wt-status-' + mins).textContent = 'Klar';
+      document.getElementById('wt-btn-' + mins).textContent = 'Start';
+      document.getElementById('wt-btn-' + mins).className = 'wt-btn start';
+      document.getElementById('wt-bar-' + mins).style.width = '0%';
+    });
+  }
+
   setInterval(updateClock, 1000);
 
   document.addEventListener('keydown', e => {
-    if (e.key >= '0' && e.key <= '9') numPress(e.key);
-    else if (e.key === 'Backspace') numDel();
-    else if (e.key === 'Tab') {
-      e.preventDefault();
-      switchField(activeField === 'dep' ? 'dur' : 'dep');
+    if (document.getElementById('page-eta').classList.contains('active')) {
+      if (e.key >= '0' && e.key <= '9') numPress(e.key);
+      else if (e.key === 'Backspace') numDel();
+      else if (e.key === 'Tab') { e.preventDefault(); switchField(activeField === 'dep' ? 'dur' : 'dep'); }
     }
   });
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(console.error);
-  }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(console.error);
 </script>
 </body>
 </html>
